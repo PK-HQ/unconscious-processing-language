@@ -1,6 +1,6 @@
 %% Overview
 %1. Setting parameters
-clear all
+clearvars -except threshold
 %% Setting parameters
 
 %getenv('DYLD_LIBRARY_PATH')
@@ -17,14 +17,15 @@ keymode               = input('Mac1 Win2: ');
 ContrastR             = input('ContrastR:'); %Right hemi contrast
 ContrastL             = input('ContrastL:'); %Left hemi contrast
 % --- Names ---
-current_date=datestr(datetime('today'),'ddmmYY');
+current_date=datestr(datetime('today'),'YYYYmmdd');
 current_time=datestr(now, 'HHMM');
-folder = {'/Users/pk/Desktop/Script/Mon/'};
+folder = {'/Users/pk/Desktop/fc/script/Mon/'};
 %fName_r       = [ 'AU_' '_Sub' num2str(subjNo) '_Run' num2str(runNo) '.txt' ];
-savefilename=['FC_cfs_Sub' num2str(subjNo) '_' current_date '_' current_time '.csv'];
+subno=sprintf('%02d', 2);
+savefilename=['FC_cfs_sub' num2str(subno) '_' current_date '_' current_time '.csv'];
 %header={'Trial_number' 'Sentence_ID' 'Sentence_pixel_length' 'Congruent_1' 'Familiar_1' 'LocationTop_1' 'Cued_1' 'Trialbroken_1' 'ST'};
 fid = fopen(savefilename, 'w');
-fprintf(fid, 'Trial_number,Sentence_ID,Sentence_pixel_length,Congruent_1,Familiar_1,LocationTop_1,Cued_1,Trialcorrect_1,Trialbroken_1,ST\n');
+fprintf(fid, 'subID,Trial_number,Sentence_ID,Sentence_pixel_length,Congruent_1,Familiar_1,LocationTop_1,Cued_1,Trialcorrect_1,Trialbroken_1,ST\n');
 fclose(fid);
 
 
@@ -36,7 +37,8 @@ xgomid = 320;
 ygomid = 140;
 scsize = {[xgomid ygomid xgomid+1280 ygomid+800];[]};
 disize = 2; %1=mini 2=full
-[wPtr, rect] = Screen('OpenWindow', screid, [0 0 0] , scsize{disize}); % what is a windows pointer?
+[wPtr, rect] = Screen('OpenWindow', screid, [0 0 0] , scsize{disize});
+rect_col=[102 255 255];
 if disize == 2;
     HideCursor
 end
@@ -129,6 +131,43 @@ rectColor = [255 255 255];
 %% --- Experimental Design --- 
 % [SENTENCE_ID | CONGRUENT=1 | FAMILIAR=1 |  LOCATION TOP=1 | ATTENTION CUED=1]
 ntrials  = 512; % [30sentences+2blanks (SENTENCE_ID) * 2(CONGRUENCY) * 2(FAMILIARITY) * 2 (LOCATION) * 2(ATTENTION CUE)
+sentence_index=[1:30]'; % CondList(:,1) = [1:32]' repeated 16x
+Condperms=[1,1,1,1;1,1,1,2;1,1,2,1;1,1,2,2;1,2,1,1;1,2,1,2;1,2,2,1;1,2,2,2;2,1,1,1;2,1,1,2;2,1,2,1;2,1,2,2;2,2,1,1;2,2,1,2;2,2,2,1;2,2,2,2]; % 16 unique combinations of 4 binary variables
+CondList=zeros(480, 5);
+row1=1;
+row30=30;
+for i=1:16,
+    A=repmat(Condperms(i,:),30,1);
+    B = [sentence_index A]; % combining into final Condition List
+    CondList(row1:row30,:)=B;
+    row1=row1+30;
+    row30=row30+30;
+end
+CondList = CondList(randperm(length(CondList)),:);
+blanks_index=[repmat(31,16,1); repmat(32,16,1)]; % CondList(:,1) = [1:32]' repeated 16x
+Condperms=repmat([1,1,1,1;1,1,1,1;1,1,2,1;1,1,2,1;1,2,1,1;1,2,1,1;1,2,2,1;1,2,2,1;2,1,1,1;2,1,1,1;2,1,2,1;2,1,2,1;2,2,1,1;2,2,1,1;2,2,2,1;2,2,2,1],2,1); % 16 unique combinations of 4 binary variables
+BlanksList=[blanks_index,Condperms];
+BlanksList = BlanksList(randperm(length(BlanksList)),:);
+
+% Pseudorandom blank trials
+index_base=15;
+for i=1:32,
+    k=index_base+round((rand()-0.5)*6); %every 12 +-3
+    CondList=[CondList(1:k,:); BlanksList(i,:); CondList(k+1:end,:)];
+    index_base=index_base+15+round(rand(1));
+end
+
+a=CondList(:,1); % Randomized sentence index
+
+
+CondList(:,6)=repmat(subjNo,512,1);
+Catch    = 0; %Catch trial
+
+
+
+
+%{
+ntrials  = 512; % [30sentences+2blanks (SENTENCE_ID) * 2(CONGRUENCY) * 2(FAMILIARITY) * 2 (LOCATION) * 2(ATTENTION CUE)
 sentence_index=[1:32]'; % CondList(:,1) = [1:32]' repeated 16x
 Condperms=[1,1,1,1;1,1,1,2;1,1,2,1;1,1,2,2;1,2,1,1;1,2,1,2;1,2,2,1;1,2,2,2;2,1,1,1;2,1,1,2;2,1,2,1;2,1,2,2;2,2,1,1;2,2,1,2;2,2,2,1;2,2,2,2]; % 16 unique combinations of 4 binary variables
 CondList=zeros(ntrials, 5);
@@ -142,34 +181,9 @@ for i=1:16,
     row1=row1+32;
     row32=row32+32;
 end
+CondList(:,6)=repmat(subjNo,512,1);
 a=CondList(:,1); % Randomized sentence index
 Catch    = 0; %Catch trial
-%{
-CondList = ones(ntrials,6);
-CondList(1:ntrials/2,2) =2; % Target word congruency: 1= CON 2=InCON
-CondList(1:ntrials/4,3) =2; % Noflip=1 Flip=2
-CondList((ntrials+2)/2:3*ntrials/4,3) =2; % Noflip=1 Flip=2
-CondList(1:2:ntrials,4)=2; % Stimulus location
-CondList(1:2:ntrials/2,5)=2; % Cue valid/invalid
-CondList((ntrials+4)/2:2:ntrials,5)=2; % Cue valid/invalid
-CondList(2:2:ntrials,6)=2; % Useless?
-CondList=CondList(randperm(size(CondList,1)),:); %randomize
-CondList(:,1)=1:ntrials; % # No.
-for i=1:ntrials-3 % no >3 reps
-    if diff(CondList(i:i+1,2))==0 && diff(CondList(i+1:i+2,2))==0 && diff(CondList(i+2:i+3,2))==0
-        if CondList(i,2)==1
-            CondList(i+3,2)=2;
-        else CondList(i+3,2)=1;
-        end
-    end
-    
-    if diff(CondList(i:i+1,4))==0 && diff(CondList(i+1:i+2,4))==0 && diff(CondList(i+2:i+3,4))==0
-        if CondList(i,4)==1
-            CondList(i+3,4)=2;
-        else CondList(i+3,4)=1;
-        end
-    end
-end
 %}
 % --- Results container ---
 ResultSet = zeros(ntrials,9); % Creating container for results
@@ -256,8 +270,8 @@ for i=1:ntrials;
                             xpixel_length=(normBoundsRect(3));
                             ypixel_height=(normBoundsRect(4));
                             horz_position=LeftboxXCenter-(0.5*xpixel_length);
-                            vert_position=Top_textposition-(0.5*ypixel_height)-2;
-                            ResultSet(i,3)=xpixel_length;
+                            vert_position=Top_textposition-(0.5*ypixel_height)-1;
+                            ResultSet(i,4)=xpixel_length;
                             DrawFormattedText(wPtr, char(text3), horz_position, vert_position, ConLCG1, [], []); % Familiar = 1 NF too high %char(text3)
                         else
                             DrawFormattedText(wPtr, char(text3), LeftboxXCenter, Top_textposition, ConLCG1, [], []); % Familiar = 1
@@ -269,7 +283,7 @@ for i=1:ntrials;
                             ypixel_height=(normBoundsRect(4));
                             horz_position=(LeftboxXCenter-0.5*xpixel_length);
                             vert_position=Top_textposition-0.5*ypixel_height+2;
-                            ResultSet(i,3)=xpixel_length;
+                            ResultSet(i,4)=xpixel_length;
                             DrawFormattedText(wPtr, char(text3), horz_position, vert_position, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low +205
                         else
                             DrawFormattedText(wPtr, char(text3), LeftboxXCenter, Top_textposition, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low
@@ -289,8 +303,8 @@ for i=1:ntrials;
                             xpixel_length=(normBoundsRect(3));
                             ypixel_height=(normBoundsRect(4));
                             horz_position=LeftboxXCenter-0.5*xpixel_length;
-                            vert_position=Bottom_textposition-0.5*ypixel_height;
-                            ResultSet(i,3)=xpixel_length;
+                            vert_position=Bottom_textposition-0.5*ypixel_height-1;
+                            ResultSet(i,4)=xpixel_length;
                             DrawFormattedText(wPtr, char(text3), (horz_position), vert_position, ConLCG1, [], []); % Familiar = 1 NF too high
                         else
                             DrawFormattedText(wPtr, char(text3), LeftboxXCenter, Bottom_textposition, ConLCG1, [], []); % Familiar = 1 NF too high
@@ -302,7 +316,7 @@ for i=1:ntrials;
                             ypixel_height=(normBoundsRect(4));
                             horz_position=LeftboxXCenter-0.5*xpixel_length;
                             vert_position=Bottom_textposition-0.5*ypixel_height;
-                            ResultSet(i,3)=xpixel_length;
+                            ResultSet(i,4)=xpixel_length;
                             DrawFormattedText(wPtr, char(text3), (horz_position), vert_position, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low +155
                         else
                             DrawFormattedText(wPtr, char(text3), LeftboxXCenter, Bottom_textposition, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low
@@ -321,7 +335,7 @@ for i=1:ntrials;
                 end
                 Screen('DrawTexture', wPtr, s(1).tex{o}, [], MonTop, [], [], [], ([255 255 255]));
                 Screen('DrawTexture', wPtr, s(1).tex{o}, [], MonBottom, [], [], [], ([255 255 255]));
-                penWidthPixels = 3; % width for the cuing frame
+                penWidthPixels = 2; % width for the cuing frame
 
                 % --- Cue Validity ---
                 if CondList(i,5)==1 % Cue valid = 1 (cue follows location of target sentence)
@@ -331,7 +345,7 @@ for i=1:ntrials;
                         if a(i)>30 % if sentence_ID corresponds to blank target(ID=31,32), display catch trial circle
                             Screen('FillOval', wPtr, rectColor, centeredRect, maxDiameter);
                         end
-                        Screen('FrameRect', wPtr, [0 255 0], MonTop, penWidthPixels); %cue
+                        Screen('FrameRect', wPtr, rect_col, MonTop+[-2 -2 2 2], penWidthPixels); %cue
                         breakmon=GetSecs-timezero;
                     elseif CondList(i,4)==2 % vice versa
                         centeredRect = CenterRectOnPointd(baseRect, MonRightXCenter+1, YCenter+32);
@@ -339,15 +353,15 @@ for i=1:ntrials;
                         if a(i)>30 % if sentence_ID corresponds to blank target(ID=31,32), display catch trial circle
                             Screen('FillOval', wPtr, rectColor, centeredRect, maxDiameter);
                         end
-                        Screen('FrameRect', wPtr, [0 255 0], MonBottom, penWidthPixels);
+                        Screen('FrameRect', wPtr, rect_col, MonBottom+[-2 -2 2 2], penWidthPixels);
                         breakmon=GetSecs-timezero;
                     end
                 elseif CondList(i,5)==2 % Cue invalid = 2 (cue does not follow location of target sentence)
                     if CondList(i,4)==1 % if target is top, cue is on bottom
-                        Screen('FrameRect', wPtr, [0 255 0], MonBottom, penWidthPixels);
+                        Screen('FrameRect', wPtr, rect_col, MonBottom+[-2 -2 2 2], penWidthPixels);
                         breakmon=GetSecs-timezero;
                     elseif CondList(i,4)==2 % vice versa
-                        Screen('FrameRect', wPtr, [0 255 0], MonTop, penWidthPixels);
+                        Screen('FrameRect', wPtr, rect_col, MonTop+[-2 -2 2 2], penWidthPixels);
                         breakmon=GetSecs-timezero;
                     end
                 end
@@ -372,8 +386,8 @@ for i=1:ntrials;
             if keydown==0
                 if (GetSecs-(timezero)>Wrdtime+SOA),
                     NonBreakTime=GetSecs;
-                    ResultSet(i,9)= 0; %target word unbroken
-                    ResultSet(i,10)= NonBreakTime-(timezero+Wrdtime+SOA);
+                    ResultSet(i,10)= 0; %target word unbroken
+                    ResultSet(i,11)= NonBreakTime-(timezero+Wrdtime+SOA);
                     disp('*Non-broken*:');disp(num2str(NonBreakTime-(timezero+SOA)))
                     keydown=3;
                 end
@@ -386,10 +400,10 @@ for i=1:ntrials;
                     keydown=3;
                     disp('Top')
                     if CondList(i,4)==1 % stimulus Top
-                        ResultSet(i,8)=1; %Broken correct
+                        ResultSet(i,9)=1; %Broken correct
                         disp('[Broken]')
                     else disp('[FA]')
-                        ResultSet(i,8)=0; %Broken wrong
+                        ResultSet(i,9)=0; %Broken wrong
                     end
                     if a(i)>30,
                         Catch=Catch+1; 
@@ -399,10 +413,10 @@ for i=1:ntrials;
                     keydown=3;
                     disp('Bottom')
                     if CondList(i,4)==2 % stimulus bottom
-                        ResultSet(i,8)=1; %Broken correct
+                        ResultSet(i,9)=1; %Broken correct
                         disp('[Broken]')
                     else disp('[FA]')
-                        ResultSet(i,8)=0; %Broken wrong
+                        ResultSet(i,9)=0; %Broken wrong
                     end 
                     if a(i)>30,
                         Catch=Catch+1;
@@ -422,8 +436,8 @@ for i=1:ntrials;
                                 disp(keydown)
                                 BreakTime=GetSecs;
                                 Suppressiontime = BreakTime-timezero-SOA;
-                                ResultSet(i,9)= 1; %target word broken
-                                ResultSet(i,10)= Suppressiontime; %Suppression time
+                                ResultSet(i,10)= 1; %target word broken
+                                ResultSet(i,11)= Suppressiontime; %Suppression time
                                 disp('ST:');disp(num2str(BreakTime-(timezero+SOA)))
                             end
                         end
@@ -437,15 +451,17 @@ for i=1:ntrials;
                 end
             end
             %--- Results ---
-            ResultSet(:,1)=CondList(:,1); %TNum
-            ResultSet(i,2)=a(i);          %actual trial a(i)
-            %ResultSet(i,3)=xpixel_length;
-            ResultSet(:,4)=CondList(:,2); %CON 1=CON 2=InCON
-            ResultSet(:,5)=CondList(:,3); %Flip 1=Noflip 2=Flip
-            ResultSet(:,6)=CondList(:,4); %Stimulus position 1=Top 0=Bottom
-            ResultSet(:,7)=CondList(:,5); %Cue valid/invalid
-            %ResultSet(:,7)=break location (should correspond to col 5)
-            %ResultSet(:,8)=break (yes=1)
+            ResultSet(:,1)=CondList(:,6);
+            ResultSet(:,2)=CondList(:,1); %TNum
+            ResultSet(i,3)=a(i);          %actual trial a(i)
+            %ResultSet(i,4)=xpixel_length;
+            ResultSet(:,5)=CondList(:,2); %CON 1=CON 2=InCON
+            ResultSet(:,6)=CondList(:,3); %Flip 1=Noflip 2=Flip
+            ResultSet(:,7)=CondList(:,4); %Stimulus position 1=Top 0=Bottom
+            ResultSet(:,8)=CondList(:,5); %Cue valid/invalid
+            %ResultSet(i,9)= break correct
+            %ResultSet(i,10)= broken
+            %ResultSet(i,11)= ST
         end
         %disp(sprintf('passes end of loop'))
     catch err
@@ -453,7 +469,7 @@ for i=1:ntrials;
         Screen('CloseAll');
         rethrow(err);
     end
-    ResultSet(ResultSet(i,4:7)==2)=0;
+    ResultSet(ResultSet(i,5:8)==2)=0;
     dlmwrite(savefilename, ResultSet(i,:),'delimiter',',','-append');
 end
 sca

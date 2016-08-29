@@ -18,7 +18,7 @@ keymode               = input('Mac1 Win2: ');
 % --- Names ---
 current_date=datestr(datetime('today'),'ddmmYY');
 current_time=datestr(now, 'HHMM');
-folder = {'/Users/pk/Desktop/Script/Mon/'};
+folder = {'/Users/pk/Desktop/fc/script/Mon/'};
 %fName_r       = [ 'AU_' '_Sub' num2str(subjNo) '_Run' num2str(runNo) '.txt' ];
 savefilename=['FC_cfs_Sub' num2str(subjNo) '_' current_date '_' current_time '_Cal.csv'];
 %header={'Trial_number' 'Sentence_ID' 'Sentence_pixel_length' 'Congruent_1' 'Familiar_1' 'LocationTop_1' 'Cued_1' 'Trialbroken_1' 'ST'};
@@ -189,8 +189,8 @@ end
 
 
 %% AMUD
-UD_up=PAL_AMUD_setupUD_up('startvalue',0.1,'up',1,'down',3,'stepsizeup',0.01,'stepsizedown',0.01,'stopcriterion','trials','stopRule',20);
-UD_down =PAL_AMUD_setupUD_down('startvalue',0.9,'up',1,'down',3,'stepsizeup',0.01,'stepsizedown',0.01,'stopcriterion','trials','stopRule',40);
+UD_up=PAL_AMUD_setupUD_up('startvalue',0.1,'up',1,'down',3,'stepsizeup',0.01,'stepsizedown',0.01,'stopcriterion','trials','stopRule',32);
+UD_down =PAL_AMUD_setupUD_down('startvalue',0.9,'up',1,'down',3,'stepsizeup',0.01,'stepsizedown',0.01,'stopcriterion','trials','stopRule',32);
 
 
 %% Script start
@@ -750,33 +750,34 @@ for i=1:64, %total trials for both staircases
 end
 sca
 
+%% Plots fpr staircases
 t = 1:length(UD_up.x);
-figure('name','Up/Down Adaptive Procedure');
+figure('name','Ascending staircase');
 plot(t,UD_up.x,'k');
 hold on;
 plot(t(UD_up.response == 1),UD_up.x(UD_up.response == 1),'ko', 'MarkerFaceColor','k');
 plot(t(UD_up.response == 0),UD_up.x(UD_up.response == 0),'ko', 'MarkerFaceColor','w');
 set(gca,'FontSize',16);
-axis([0 max(t)+1 min(UD_up.x)-(max(UD_up.x)-min(UD_up.x))/10 max(UD_up.x)+(max(UD_up.x)-min(UD_up.x))/10]);
+axis([0, max(t)+1, min(UD_up.x)-(max(UD_up.x)-min(UD_up.x))/10, max(UD_up.x)+(max(UD_up.x)-min(UD_up.x))/10]);
 %line([1 length(UD_up.x)], [targetX targetX],'linewidth', 2, 'linestyle', '--', 'color','k');
 xlabel('Trial');
 ylabel('Stimulus Intensity');
 
-Mean_up = PAL_AMUD_up_analyzeUD_up(UD_up, 'reversals', 4);
-disp(sprintf('\n-----------------------------------------------------\n[Contrast threshold across last 4 reversals]: %f\n', Mean))
-
-    
 t = 1:length(UD_down.x);
-figure('name','Up/Down Adaptive Procedure');
+figure('name','Descending staircase');
 plot(t,UD_down.x,'k');
 hold on;
 plot(t(UD_down.response == 1),UD_down.x(UD_down.response == 1),'ko', 'MarkerFaceColor','k');
 plot(t(UD_down.response == 0),UD_down.x(UD_down.response == 0),'ko', 'MarkerFaceColor','w');
 set(gca,'FontSize',16);
-axis([0 max(t)+1 min(UD_down.x)-(max(UD_down.x)-min(UD_down.x))/10 max(UD_down.x)+(max(UD_down.x)-min(UD_down.x))/10]);
+axis([0, max(t)+1, min(UD_down.x)-(max(UD_down.x)-min(UD_down.x))/10, max(UD_down.x)+(max(UD_down.x)-min(UD_down.x))/10]);
 %line([1 length(UD_down.x)], [targetX targetX],'linewidth', 2, 'linestyle', '--', 'color','k');
 xlabel('Trial');
 ylabel('Stimulus Intensity');
 
-Mean_up = PAL_AMUD_analyzeUD_down(UD_down, 'reversals', 4);
-disp(sprintf('\n-----------------------------------------------------\n[Contrast threshold across last 3 reversals]: %f\n', Mean))
+
+Mean_up = PAL_AMUD_analyzeUD_up(UD_up, 'reversals', 4);
+disp(sprintf('\nAscending threshold (last 4 reversals): %f', Mean_up))
+Mean_down = PAL_AMUD_analyzeUD_down(UD_down, 'reversals', 4);
+disp(sprintf('\nDescending threshold (last 4 reversals): %f', Mean_down))
+threshold=(Mean_up+Mean_down)/2;
