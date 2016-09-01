@@ -6,38 +6,73 @@ output:
     html_document:
         toc: true
 ---
-Test code line with command+enter
+
+<style type="text/css">
+body, td{
+  font-family: Cambria;
+}
+code.r{
+  font-family: Inconsolata;
+}
+</style>
+
 
 # Preparing the data
 ```{r}
+### Notes
 # install.packages('ggplot2',dependencies = T)
+# Test code line with command+enter
+# update.packages(checkBuilt = T,ask = F)
+# head(ds) # first few lines of a dataframe
+# str(ds) #show structure of dataframe
+###
+
+# Setting variables:
+outT <- 2.5 # Outlier factor
+
 # Loading libraries
-#update.packages(checkBuilt = T,ask = F)
-library(ggplot2)
+library(ggplot2) # for plotting
 
 #Importing the data
-data_dir <- '/Volumes/PK/'
-filename <- 'FC_cfs_1_15082016.csv'
-ds <- read.csv(paste(data_dir,filename,sep=""))
-head(ds)
-str(ds) #show structure of dataframe
-ds$SubjectID
-# Non-blank trials:
-nonBlank <- ds[ds$SentenceID<31,]
+#data_dir <- '/Volumes/PK/'
+homeDir <- path.expand('~')
+dataDir <- paste(homeDir, 'Dropbox/Projects/fc/fc/data/', sep='/')
+dataFiles <- dir(dataDir, pattern='csv')
+nSubj <- length(dataFiles) # number of subjects
+
+# Going through all subjects' data:
+df <- data.frame() # data frame that combines all subjects' data into a single ds
+curFileN <- 1 #temp
+
+# Loading the data;
+ds <- read.csv(paste(dataDir, dataFiles[curFileN], sep=''))
+ds$trialN <- 1:nrow(ds)
+# Shorter names for variables:
+colnames(ds) <- c('subjId', 'domEyeR', 'threshStHi', 'threshStLo', 'thresh', 'sentId',
+                  'sentPx', 'congr', 'fam', 'locTop', 'cued', 'corr', 'broken', 'rt')
+# Non-blank data set:
+cds <- ds[ds$sentId<31,]
 # Removing the outliers:
-outT <- 2.5
-cds <- nonBlank
-cds <- cds[cds$ST>(mean(nonBlank$ST)-outT*sd(nonBlank$ST)),]
-cds <- cds[cds$ST<(mean(nonBlank$ST)+outT*sd(nonBlank$ST)),]
+outlLo <- cds$rt>(mean(nbds$rt)-outT*sd(nbds$rt)) # binary for every row
+outlHi <- cds$rt<(mean(nbds$rt)+outT*sd(nbds$rt))
+cds$outlNlo <- sum(!outlLo) # counting the number of outliers before removing
+cds$outlNhi <- sum(!outlHi)
+cds <- cds[outlLo,] # removing the outliers
+cds <- cds[outlHi,]
+cds <- cds[!is.na(cds$subjId),] # usually don't need this; remove NA rows
+# Binding the subject ds to the common data frame:
+df <- rbind(df, cds)
 ```
 
 # Plots
+
 ## Individual plots 
-```{r}
+```{r, fig.height=3, fig.width=3}
 #ggplot(data=nonBlank[nonBlank$CueValid==1,], aes(x=factor(Familiar), y=ST, colour=factor(Congruent))) + geom_boxplot()
 #ggplot(data=nonBlank[nonBlank$CueValid==0,], aes(x=factor(Familiar), y=ST, colour=factor(Congruent))) + geom_boxplot()
-ggplot(data=cds[cds$CueValid==1,], aes(x=factor(Familiar), y=ST, colour=factor(Congruent))) + geom_boxplot()
-ggplot(data=cds[cds$CueValid==0,], aes(x=factor(Familiar), y=ST, colour=factor(Congruent))) + geom_boxplot()
+for(curSubjN in length(dataFiles)){
+    # ss <- df(df$subjId==)
+    ggplot(data=cds, aes(x=factor(fam), y=rt, colour=factor(congr))) + 
+        geom_boxplot() + facet_grid(~cued) + theme_bw()
+}
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
