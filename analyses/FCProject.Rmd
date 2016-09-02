@@ -28,10 +28,12 @@ code.r{
 ###
 
 # Setting variables:
+options(width=108)
 outT <- 2.5 # Outlier factor
 
 # Loading libraries
 library(ggplot2) # for plotting
+library(plyr)
 
 #Importing the data
 #data_dir <- '/Volumes/PK/'
@@ -42,37 +44,78 @@ nSubj <- length(dataFiles) # number of subjects
 
 # Going through all subjects' data:
 df <- data.frame() # data frame that combines all subjects' data into a single ds
-curFileN <- 1 #temp
-
-# Loading the data;
-ds <- read.csv(paste(dataDir, dataFiles[curFileN], sep=''))
-ds$trialN <- 1:nrow(ds)
-# Shorter names for variables:
-colnames(ds) <- c('subjId', 'domEyeR', 'threshStHi', 'threshStLo', 'thresh', 'sentId',
-                  'sentPx', 'congr', 'fam', 'locTop', 'cued', 'corr', 'broken', 'rt')
-# Non-blank data set:
-cds <- ds[ds$sentId<31,]
-# Removing the outliers:
-outlLo <- cds$rt>(mean(nbds$rt)-outT*sd(nbds$rt)) # binary for every row
-outlHi <- cds$rt<(mean(nbds$rt)+outT*sd(nbds$rt))
-cds$outlNlo <- sum(!outlLo) # counting the number of outliers before removing
-cds$outlNhi <- sum(!outlHi)
-cds <- cds[outlLo,] # removing the outliers
-cds <- cds[outlHi,]
-cds <- cds[!is.na(cds$subjId),] # usually don't need this; remove NA rows
-# Binding the subject ds to the common data frame:
-df <- rbind(df, cds)
+curSubjN <- 1 #temp
+for(curSubjN in 1:nSubj){
+    # Loading the data;
+    ds <- read.csv(paste(dataDir, dataFiles[curSubjN], sep=''))
+    # Shorter names for variables:
+    colnames(ds) <- c('subjId', 'domEyeR', 'threshStHi', 'threshStLo', 'thresh', 'trialN', 'sentId',
+                      'sentPx', 'congr', 'fam', 'locTop', 'cued', 'corr', 'broken', 'rt')
+    # Non-blank data set:
+    cds <- ds[ds$sentId<31,]
+    # Removing the outliers:
+    outlLo <- cds$rt>(mean(cds$rt)-outT*sd(cds$rt)) # binary for every row
+    outlHi <- cds$rt<(mean(cds$rt)+outT*sd(cds$rt))
+    cds$outlNlo <- sum(!outlLo) # counting the number of outliers before removing
+    cds$outlNhi <- sum(!outlHi)
+    cds <- cds[outlLo,] # removing the outliers
+    cds <- cds[outlHi,]
+    cds <- cds[!is.na(cds$subjId),] # usually don't need this; remove NA rows
+    # Binding the subject ds to the common data frame:
+    df <- rbind(df, cds)
+}
+# Prettying up the data frame:
+df$subjId <- factor(df$subjId)
+df$Familiarity[df$fam==1] <- 'Familiar\n(Upright)'
+df$Familiarity[df$fam==0] <- 'Unfamiliar\n(Inverted)'
+df$Congruency[df$congr==1] <- 'Congruent'
+df$Congruency[df$congr==0] <- 'Incongruent'
+df$Attention[df$cued==1] <- 'Cued'
+df$Attention[df$cued==0] <- 'Uncued'
+head(df)
 ```
 
-# Plots
+# Quality control
 
-## Individual plots 
-```{r, fig.height=3, fig.width=3}
-#ggplot(data=nonBlank[nonBlank$CueValid==1,], aes(x=factor(Familiar), y=ST, colour=factor(Congruent))) + geom_boxplot()
-#ggplot(data=nonBlank[nonBlank$CueValid==0,], aes(x=factor(Familiar), y=ST, colour=factor(Congruent))) + geom_boxplot()
-for(curSubjN in length(dataFiles)){
-    # ss <- df(df$subjId==)
-    ggplot(data=cds, aes(x=factor(fam), y=rt, colour=factor(congr))) + 
-        geom_boxplot() + facet_grid(~cued) + theme_bw()
+## Outlier suppression times per participant
+```{r}
+ddply(df, c('subjId'), summarise, outlNumLow = median(outlNlo), outlNumHigh = median(outlNhi))
+```
+
+## RTs across trials
+```{r, fig.height=3, fig.width=4}
+for(curSubjN in 1:nSubj){
+    curSubjId <- levels(df$subjId)[curSubjN]
+    ss <- df[df$subjId==curSubjId,]
+    p <- ggplot(data=ss, aes(x=trialN, y=rt)) + 
+        geom_line() + theme_bw() + ylim(.5,2) +
+        labs(x='Trial Number', y='Suppression Time',
+             title=paste('Participant', as.character(curSubjId))) + 
+        theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
+              axis.text=element_text(size=8), axis.title=element_text(size=9),
+              legend.text=element_text(size=8), legend.title=element_text(size=9),
+              legend.key = element_blank(), legend.margin=unit(-.04, 'in'),
+              legend.background = element_rect(fill='transparent'))
+    plot(p)
+}
+```
+
+# Individual plots 
+
+## Congruence X Familiarity X Cue
+```{r, fig.height=3, fig.width=4}
+for(curSubjN in 1:nSubj){
+    curSubjId <- levels(df$subjId)[curSubjN]
+    ss <- df[df$subjId==curSubjId,]
+    p <- ggplot(data=ss, aes(x=factor(Familiarity), y=rt, colour=factor(Congruency))) + 
+        geom_boxplot() + facet_grid(~Attention) + theme_bw() +
+        labs(x='Familiarity', y='Suppression Time', colour='Congruency',
+             title=paste('Participant', as.character(curSubjId))) + 
+        theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
+              axis.text=element_text(size=8), axis.title=element_text(size=9),
+              legend.text=element_text(size=8), legend.title=element_text(size=9),
+              legend.key = element_blank(), legend.margin=unit(-.04, 'in'),
+              legend.background = element_rect(fill='transparent'))
+    plot(p)
 }
 ```
