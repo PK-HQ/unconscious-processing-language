@@ -119,3 +119,19 @@ for(curSubjN in 1:nSubj){
     plot(p)
 }
 ```
+
+# Group plots
+
+## Is cueing effective?
+```{r, fig.height=3, fig.width=6}
+p <- ggplot(data=df, aes(x=Attention, y=rt)) + 
+    geom_boxplot() + facet_grid(~subjId) + theme_bw() +
+    labs(x='Attention effect X Subject', y='Suppression Time', colour='Attention',
+         title='Effect of attentional cueing') +
+    theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
+          axis.text=element_text(size=8), axis.title=element_text(size=9),
+          legend.text=element_text(size=8), legend.title=element_text(size=9),
+          legend.key = element_blank(), legend.margin=unit(.0, 'in'),
+          legend.background = element_rect(fill='transparent'))
+plot(p)
+```
