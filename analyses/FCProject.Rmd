@@ -95,7 +95,7 @@ ddply(df, c('subjId'), summarise, outlNumLow = median(outlNlo), outlNumHigh = me
 for(curSubjN in 1:nSubj){
     curSubjId <- levels(df$subjId)[curSubjN]
     ss <- df[df$subjId==curSubjId,]
-    p <- ggplot(data=ds, aes(x=trialN, y=rt)) + 
+    p <- ggplot(data=ss, aes(x=trialN, y=rt)) + 
         geom_line() + theme_bw() + ylim(.5,2) +
         labs(x='Trial Number', y='Suppression Time',
              title=paste('Participant', as.character(curSubjId))) + 
@@ -115,7 +115,7 @@ for(curSubjN in 1:nSubj){
 for(curSubjN in 1:nSubj){
     curSubjId <- levels(df$subjId)[curSubjN]
     ss <- df[df$subjId==curSubjId,]
-    p <- ggplot(data=df, aes(x=factor(Familiarity), y=rt, colour=factor(Congruency))) + 
+    p <- ggplot(data=ss, aes(x=factor(Familiarity), y=rt, colour=factor(Congruency))) + 
         geom_boxplot() + facet_grid(~Attention) + theme_bw() +
         labs(x='Familiarity', y='Suppression Time', colour='Congruency',
              title=paste('Participant', as.character(curSubjId))) + 
@@ -130,11 +130,25 @@ for(curSubjN in 1:nSubj){
 
 # Group plots
 
-## Is cueing effective?
+## Is cueing effective across participants?
+```{r, fig.height=3, fig.width=6}
+p <- ggplot(data=df, aes(x=Attention, y=rt)) + 
+    geom_boxplot() + facet_grid(~subjId) + theme_bw() +
+    labs(x='Attention effect X Subject', y='Suppression Time', colour='Attention',
+         title='Effect of attentional cueing') +
+    theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
+          axis.text=element_text(size=8), axis.title=element_text(size=9),
+          legend.text=element_text(size=8), legend.title=element_text(size=9),
+          legend.key = element_blank(), #legend.margin=unit(.0, 'in'),
+          legend.background = element_rect(fill='transparent'))
+plot(p)
+```
+
+## Is cueing effective across trials?
 ```{r, fig.height=3, fig.width=6}
 p <- ggplot(data=df, aes(x=Attention, y=rt)) + 
     geom_boxplot() + facet_grid(~bin) + theme_bw() +
-    labs(x='Attention effect X Subject', y='Suppression Time', colour='Attention',
+    labs(x='Attention effect X 100-trial bins', y='Suppression Time', colour='Attention',
          title='Effect of attentional cueing') +
     theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
           axis.text=element_text(size=8), axis.title=element_text(size=9),
