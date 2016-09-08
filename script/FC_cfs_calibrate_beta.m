@@ -16,16 +16,17 @@ runNo                 = input('run: ')';
 DomEye                = input('DomEye:'); %1=R 2=L
 keymode               = input('Mac1 Win2: ');
 % --- Names ---
-current_date=datestr(datetime('today'),'ddmmYY');
+current_date=datestr(datetime('today'),'YYYYmmdd');
 current_time=datestr(now, 'HHMM');
 folder = {'/Users/pk/Desktop/fc/script/Mon/'};
 %fName_r       = [ 'AU_' '_Sub' num2str(subjNo) '_Run' num2str(runNo) '.txt' ];
-savefilename=['FC_cfs_Sub' num2str(subjNo) '_' current_date '_' current_time '_Cal.csv'];
+subno=sprintf('%02d', 2);
+savefilename=['FC_thresh_sub' num2str(subno) '_' current_date '_' current_time '.csv'];
 %header={'Trial_number' 'Sentence_ID' 'Sentence_pixel_length' 'Congruent_1' 'Familiar_1' 'LocationTop_1' 'Cued_1' 'Trialbroken_1' 'ST'};
-fid = fopen(savefilename, 'w');
+fid =   fopen(savefilename, 'w');
 fprintf(fid, 'Trial_number,Sentence_ID,Sentence_pixel_length,Congruent_1,Familiar_1,LocationTop_1,Cued_1,Trialcorrect_1,Trialbroken_1,ST\n');
-fclose(fid);
-
+fclose(fid);  
+  
 
 %dlmwrite(savefilename, header,'delimiter','tab','-append');
 % --- Open screen ---
@@ -72,21 +73,24 @@ disY=150; % bigger higher
 boxcolor=[255 255 255];
 color1=[255 255 100];
 % --- Space ---
+proximity=12;
 XCenter         =retX/2;
 YCenter         =retY/2-disY;
 YCenter2        =(retY/2-disY)+25;
 LeftboxXCenter  =(1*retX/4)+disX;
 RightboxXCenter =(3*retX/4)-disX;
-Top_textposition=YCenter-11-45+22.5;%
-Bottom_textposition=YCenter+11+45-22.5;%
+Top_textposition=YCenter-11-45+22.5+proximity;%
+Bottom_textposition=YCenter+11+45-22.5-proximity;%
 boxsize         =80;
 MondrianSize    =30;
 fontsize1       =20;
 fontsize2       =14;
+
 % --- Timings and Mondrian Frequency ---
 TimeSound=1;
 TimeMon=5;
 Wrdtime=2;
+extratime=3;
 TimeImg=5;
 Timeext=0.5;
 NonBext=0.5;
@@ -94,15 +98,19 @@ MondFreq      = 10; %Unit: Hz
 MondN  = round(refreshRate/MondFreq); % frames/img
 % --- Location ---
 if DomEye ==1,
-    MonTop  = [RightboxXCenter-72 YCenter-11-45 RightboxXCenter+72 YCenter-11];
-    MonBottom = [RightboxXCenter-72 YCenter+11 RightboxXCenter+72 YCenter+11+45];
+    LeftboxXCenter  =(1*retX/4)+disX;
+    RightboxXCenter =(3*retX/4)-disX;
+    MonTop  = [RightboxXCenter-71 YCenter-11-45+(2*proximity)-2 RightboxXCenter+71 YCenter-11+2];
+    MonBottom = [RightboxXCenter-71 YCenter+11-2 RightboxXCenter+71 YCenter+11+45-(2*proximity)+2];
     %stiLeft  = [RightboxXCenter-50-MondrianSize/2-MonStiDis+5 YCenter-35 RightboxXCenter-5-MonStiDis YCenter+MondrianSize-20];
     %stiRight = [RightboxXCenter+28-MondrianSize/2-MonStiDis+5 YCenter-35 RightboxXCenter+73-MonStiDis YCenter+MondrianSize-20];
 elseif DomEye ==2,
+    LeftboxXCenter =(3*retX/4)-disX; %flipped
+    RightboxXCenter =(1*retX/4)+disX; %flipped
     %stiLeft  = [RightboxXCenter-50-(MondrianSize/2)+5 YCenter-MondrianSize/2 RightboxXCenter-5 YCenter+MondrianSize/2];
     %stiRight = [RightboxXCenter+28-(MondrianSize/2)+5 YCenter-MondrianSize/2 RightboxXCenter+73 YCenter+MondrianSize/2];
-    MonTop  = [LeftboxXCenter-72 YCenter-11-45 LeftboxXCenter+72 YCenter-11];
-    MonBottom = [LeftboxXCenter-72 YCenter+11 LeftboxXCenter+72 YCenter+11+45];
+    MonTop  = [RightboxXCenter-71 YCenter-11-45+(2*proximity)-2 RightboxXCenter+71 YCenter-11+2];
+    MonBottom = [RightboxXCenter-71 YCenter+11-2 RightboxXCenter+71 YCenter+11+45-(2*proximity)+2];
 end
 MonLeftXCenter=(MonTop(1)+MonTop(3))/2;
 MonRightXCenter=(MonBottom(1)+MonBottom(3))/2;
@@ -121,10 +129,11 @@ space   =   'space';
 UpArrow  =   'UpArrow';
 DownArrow  =   'DownArrow';
 % --- Frame & circle (catch trial) ---
-penWidthPixels = 3;
+penWidthPixels = 5;
 baseRect = [0 0 10 10];
 maxDiameter = max(baseRect) * 8;
-rectColor = [255 255 255];
+rectColor = 0.75*[255 255 255];
+rect_col=[102 255 255];
 %% --- Experimental Design --- 
 % Up/Down randomizer
 up_or_down=[];
@@ -189,12 +198,13 @@ end
 
 
 %% AMUD
-UD_up=PAL_AMUD_setupUD_up('startvalue',0.1,'up',1,'down',3,'stepsizeup',0.01,'stepsizedown',0.01,'stopcriterion','trials','stopRule',32);
-UD_down =PAL_AMUD_setupUD_down('startvalue',0.9,'up',1,'down',3,'stepsizeup',0.01,'stepsizedown',0.01,'stopcriterion','trials','stopRule',32);
+UD_up=PAL_AMUD_setupUD_up('startvalue',0.1,'up',1,'down',3,'xMax',1,'stepsizeup',0.01,'stepsizedown',0.01,'stopcriterion','reversals','stopRule',8);
+UD_down =PAL_AMUD_setupUD_down('startvalue',0.9,'up',1,'down',3,'xMax',1,'stepsizeup',0.01,'stepsizedown',0.01,'stopcriterion','reversals','stopRule',8);
 
 
 %% Script start
 for i=1:64, %total trials for both staircases
+    pause(0.3)
     %% Ascending staircase
     if CondList(i,2)==1,
         while ~UD_up.stop,
@@ -222,25 +232,25 @@ for i=1:64, %total trials for both staircases
                 breakmon=100000;
                 Aud=0;
                 Buffer=0.5;
-                disp(sprintf('     [T%d]',i))
+                disp(sprintf('  [T%d]',i))
                 if DomEye ==1,
                     %f
                 end
                 while 1, %-37 & +25
                     % CONTEXT first two words %change the timing and location
-                    if GetSecs-timezero>=SOA && GetSecs-timezero<=Wrdtime+SOA && keydown==0;
-                        if CondList(i,4)==1 % Location Top = 1
+                    if GetSecs-timezero>=SOA && GetSecs-timezero<=SOA+TimeMon && keydown==0;
+                        if CondList(i,6)==1 % Location Top = 1
                             Screen(wPtr,'TextSize',fontsize2); % text size
                             ConLCG1=ConLCG1+ConIncrL; % ramp up speed
                             Screen(wPtr,'TextFont','Arial'); % text font
                             % --- Familiarity ---
-                            if CondList(i,3)==1
+                            if CondList(i,5)==1
                                 if length(char(text3))>1;
                                     [normBoundsRect, offsetBoundsRect]= Screen('TextBounds', wPtr, char(text3), (LeftboxXCenter), Top_textposition, [], []); %offset for top
                                     xpixel_length=(normBoundsRect(3));
                                     ypixel_height=(normBoundsRect(4));
                                     horz_position=LeftboxXCenter-(0.5*xpixel_length);
-                                    vert_position=Top_textposition-(0.5*ypixel_height)-2;
+                                    vert_position=Top_textposition-(0.5*ypixel_height);
                                     DrawFormattedText(wPtr, char(text3), horz_position, vert_position, ConLCG1, [], []); % Familiar = 1 NF too high %char(text3)
 
                                 else
@@ -252,7 +262,7 @@ for i=1:64, %total trials for both staircases
                                     xpixel_length=(normBoundsRect(3));
                                     ypixel_height=(normBoundsRect(4));
                                     horz_position=(LeftboxXCenter-0.5*xpixel_length);
-                                    vert_position=Top_textposition-0.5*ypixel_height+2;
+                                    vert_position=Top_textposition-0.5*ypixel_height+3;
                                     DrawFormattedText(wPtr, char(text3), horz_position, vert_position, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low +205
                                 else
                                     DrawFormattedText(wPtr, char(text3), LeftboxXCenter, Top_textposition, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low
@@ -266,7 +276,7 @@ for i=1:64, %total trials for both staircases
                             %    [normBoundsRect, offsetBoundsRect]= Screen('TextBounds', wPtr, char(text3), (LeftboxXCenter), ((Bottom_textposition)), [], []); %offset for bottom
                             %end
                             % --- Familiarity ---
-                            if CondList(i,3)==1; 
+                            if CondList(i,5)==1; 
                                 if length(char(text3))>1;
                                     [normBoundsRect, offsetBoundsRect]= Screen('TextBounds', wPtr, char(text3), (LeftboxXCenter), Bottom_textposition, [], []); %offset for bottom
                                     xpixel_length=(normBoundsRect(3));
@@ -283,7 +293,7 @@ for i=1:64, %total trials for both staircases
                                     xpixel_length=(normBoundsRect(3));
                                     ypixel_height=(normBoundsRect(4));
                                     horz_position=LeftboxXCenter-0.5*xpixel_length;
-                                    vert_position=Bottom_textposition-0.5*ypixel_height;
+                                    vert_position=Bottom_textposition-0.5*ypixel_height+3;
                                     DrawFormattedText(wPtr, char(text3), (horz_position), vert_position, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low +155
                                 else
                                     DrawFormattedText(wPtr, char(text3), LeftboxXCenter, Bottom_textposition, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low
@@ -292,7 +302,7 @@ for i=1:64, %total trials for both staircases
                         end
                     end
                     %***** Mondrians ***** % change the size 
-                    if GetSecs-timezero>=0 && GetSecs-timezero<=SOA+Wrdtime+TimeMon && keydown==0 %for context
+                    if GetSecs-timezero>=0 && GetSecs-timezero<=SOA+TimeMon && keydown==0 %for context
                         MonSpeed(end+1) = floor((GetSecs-timezero)/(1/MondFreq));
                         if length(MonSpeed)~=1 && MonSpeed(end)~=MonSpeed(end-1)
                             o=o+1;
@@ -305,28 +315,30 @@ for i=1:64, %total trials for both staircases
                         penWidthPixels = 3; % width for the cuing frame
 
                         % Draw the rect to the screen
-                        if CondList(i,5)==1 % cue valid
-                            if CondList(i,4)==1 %Top
-                                centeredRect = CenterRectOnPointd(baseRect, MonLeftXCenter+1, YCenter-32);
+                        if CondList(i,7)==1 % cue valid
+                            if CondList(i,6)==1 %Top
+                                centeredRect = CenterRectOnPointd(baseRect, MonLeftXCenter, Top_textposition);  
 %                                 if a(i)>20
 %                                     Screen('FillOval', wPtr, rectColor, centeredRect, maxDiameter);
 %                                 end
-                                Screen('FrameRect', wPtr, [0 255 0], MonTop, penWidthPixels); %cue
+                                %Screen('FrameRect', wPtr, [0 255 0], MonTop, penWidthPixels); %cue
+                                Screen('FrameRect', wPtr, rect_col, MonTop+[-3 -3 3 3], penWidthPixels); %cue
                                 breakmon=GetSecs-timezero;
-                            elseif CondList(i,4)==2 %Bottom
-                                centeredRect = CenterRectOnPointd(baseRect, MonRightXCenter+1, YCenter+32);
+                            elseif CondList(i,6)==2 %Bottom
+                                centeredRect = CenterRectOnPointd(baseRect, MonRightXCenter, Bottom_textposition);
 %                                 if a(i)>20
 %                                     Screen('FillOval', wPtr, rectColor, centeredRect, maxDiameter);
 %                                 end
-                                Screen('FrameRect', wPtr, [0 255 0], MonBottom, penWidthPixels);
+                                %Screen('FrameRect', wPtr, [0 255 0], MonBottom, penWidthPixels);
+                                Screen('FrameRect', wPtr, rect_col, MonBottom+[-3 -3 3 3], penWidthPixels);
                                 breakmon=GetSecs-timezero;
                             end
-                        elseif CondList(i,5)==2 % cue invalid
-                            if CondList(i,4)==1 %Top
-                                Screen('FrameRect', wPtr, [0 255 0], MonBottom, penWidthPixels);
+                        elseif CondList(i,7)==2 % cue invalid
+                            if CondList(i,6)==1 %Top
+                                Screen('FrameRect', wPtr, rect_col, MonBottom+[-3 -3 3 3], penWidthPixels);
                                 breakmon=GetSecs-timezero;
-                            elseif CondList(i,4)==2 %Bottom
-                                Screen('FrameRect', wPtr, [0 255 0], MonTop, penWidthPixels);
+                            elseif CondList(i,6)==2 %Bottom
+                                Screen('FrameRect', wPtr, rect_col, MonTop+[-3 -3 3 3], penWidthPixels);
                                 breakmon=GetSecs-timezero;
                             end
                         end
@@ -349,11 +361,13 @@ for i=1:64, %total trials for both staircases
                     end
 
                     if keydown==0
-                        if (GetSecs-(timezero)>Wrdtime+SOA),
+                        if (GetSecs-(timezero)>SOA+TimeMon),
                             NonBreakTime=GetSecs;
                             ResultSet(i,9)= 0; %target word unbroken
-                            ResultSet(i,10)= NonBreakTime-(timezero+Wrdtime+SOA);
-                            disp('Non-broken target:');disp(num2str(NonBreakTime-(timezero+SOA)))
+                            ResultSet(i,10)= NonBreakTime-(timezero+SOA);
+                            nbtime=NonBreakTime-(timezero+SOA);
+                            disp(sprintf('NB: %d',round(nbtime,3)));
+                            %disp(num2str(NonBreakTime-(timezero+SOA)))
                             response = 0;
                             UD_up = PAL_AMUD_updateUD_up(UD_up, response);
                             disp('up here')
@@ -365,24 +379,23 @@ for i=1:64, %total trials for both staircases
                     end
                     if keydown==1,
                         Writetext(wPtr,textqn,LeftboxXCenter+20,RightboxXCenter+20,YCenter+26,  60,60, [255 255 255],18);
-                        if keyCode(KbName(UpArrow)) && (GetSecs-(timezero)<SOA+Wrdtime+1.5), % Answers Location question
+                        if keyCode(KbName(UpArrow)) && (GetSecs-(timezero)<SOA+TimeMon+1.5), % Answers Location question
                             BROKEN=1;
                             keydown=3;
-                            disp('Right')
-                            if CondList(i,4)==1 % stimulus right
-                                disp('broken')
+                            %disp('Top')
+                            if CondList(i,6)==1 % stimulus right
+                                disp('Top +')
                                 ResultSet(i,8)=1; %Broken correct
-                                if (Suppressiontime<1.0)
-                                    response = 1;
-                                    UD_up = PAL_AMUD_updateUD_up(UD_up, response);
+                                if (Suppressiontime<0.5)
+                                    %
                                 elseif (Suppressiontime>2.0)
                                     response = 0;
                                     UD_up = PAL_AMUD_updateUD_up(UD_up, response);
-                                elseif (Suppressiontime>1.0 && Suppressiontime<2.0);
+                                elseif (Suppressiontime>0.5 && Suppressiontime<2.0);
                                     response = 1;
                                     UD_up = PAL_AMUD_updateUD_up(UD_up, response);
                                 end
-                            else disp('false alarm')
+                            else disp('Top FALSEALARM')
                                 ResultSet(i,8)=0; %Broken wrong
                             end
                             %{
@@ -390,31 +403,30 @@ for i=1:64, %total trials for both staircases
                                 Catch=Catch+1; 
                             end
                             %}
-                        elseif keyCode(KbName(DownArrow)) && (GetSecs-(timezero)<SOA+Wrdtime+1.5), % Answers Location question
+                        elseif keyCode(KbName(DownArrow)) && (GetSecs-(timezero)<SOA+TimeMon+1.5), % Answers Location question
                             BROKEN=1;
                             
                             keydown=3;
-                            disp('Left')
-                            if CondList(i,4)==2 % stimulus left
-                                disp('broken')
+                            %disp('Bottom')
+                            if CondList(i,6)==2 % stimulus left
+                                disp('Bottom +')
                                 ResultSet(i,8)=1; %Broken correct
-                                if (Suppressiontime<1.0)
-                                    response = 1;
-                                    UD_up = PAL_AMUD_updateUD_up(UD_up, response);
+                                if (Suppressiontime<0.5)
+                                    %
                                 elseif (Suppressiontime>2.0)
                                     response = 0;
                                     UD_up = PAL_AMUD_updateUD_up(UD_up, response);
-                                elseif (Suppressiontime>1.0 && Suppressiontime<2.0);
+                                elseif (Suppressiontime>0.5 && Suppressiontime<2.0);
                                     response = 1;
                                     UD_up = PAL_AMUD_updateUD_up(UD_up, response);
                                 end
-                            else disp('false alarm')
+                            else disp('Bottom FALSEALARM')
                                 ResultSet(i,8)=0; %Broken wrong
                             end 
 %                             if a(i)>20,
 %                                 Catch=Catch+1;
 %                             end
-                        elseif (GetSecs-(timezero)>SOA+Wrdtime+1.5), %stops Location question
+                        elseif (GetSecs-(timezero)>SOA+TimeMon+1.5), %stops Location question
                             keydown=3;
                         end
                     end
@@ -423,12 +435,12 @@ for i=1:64, %total trials for both staircases
                             if keyCode(KbName(space)),
                                 if keydown==0
                                     if (GetSecs-(timezero)<SOA+TimeMon)
-                                        disp(keydown)
+                                        %disp(keydown);
                                         BreakTime=GetSecs;
                                         Suppressiontime = BreakTime-(timezero+SOA);
                                         ResultSet(i,9)= 1; %target word broken
                                         ResultSet(i,10)= BreakTime-(timezero+SOA); %break time
-                                        disp('ST:');disp(num2str(BreakTime-(timezero+SOA)))
+                                        disp(sprintf('ST: %f',round(Suppressiontime,3)))
                                     end
                                 end
                                 keydown=keydown+1;
@@ -487,27 +499,26 @@ for i=1:64, %total trials for both staircases
                 breakmon=100000;
                 Aud=0;
                 Buffer=0.5;
-                sprintf('trial [%d]',i);
-                disp(num2str(i)) %current trial no
+                disp(sprintf('  [T%d]',i))
                 centralize_word = ((cellfun('length',text3))/2);
                 %centralize_word=((cellfun('length',text3))/2);
                 if DomEye ==1,
                     %f
                 end
                 while 1, %-37 & +25
-                    if GetSecs-timezero>=SOA && GetSecs-timezero<=Wrdtime+SOA && keydown==0;
-                        if CondList(i,4)==1 % Location Top = 1
+                    if GetSecs-timezero>=SOA && GetSecs-timezero<=SOA+TimeMon && keydown==0;
+                        if CondList(i,6)==1 % Location Top = 1
                             Screen(wPtr,'TextSize',fontsize2); % text size
                             ConLCG1=ConLCG1+ConIncrL; % ramp up speed
-                            Screen(wPtr,'TextFont','Arial'); % text font
+                            Screen( wPtr,'TextFont','Arial'); % text font
                             % --- Familiarity ---
-                            if CondList(i,3)==1
+                            if CondList(i,5)==1
                                 if length(char(text3))>1;
                                     [normBoundsRect, offsetBoundsRect]= Screen('TextBounds', wPtr, char(text3), (LeftboxXCenter), Top_textposition, [], []); %offset for top
                                     xpixel_length=(normBoundsRect(3));
                                     ypixel_height=(normBoundsRect(4));
                                     horz_position=LeftboxXCenter-(0.5*xpixel_length);
-                                    vert_position=Top_textposition-(0.5*ypixel_height)-2;
+                                    vert_position=Top_textposition-(0.5*ypixel_height);
                                     DrawFormattedText(wPtr, char(text3), horz_position, vert_position, ConLCG1, [], []); % Familiar = 1 NF too high %char(text3)
 
                                 else
@@ -519,7 +530,7 @@ for i=1:64, %total trials for both staircases
                                     xpixel_length=(normBoundsRect(3));
                                     ypixel_height=(normBoundsRect(4));
                                     horz_position=(LeftboxXCenter-0.5*xpixel_length);
-                                    vert_position=Top_textposition-0.5*ypixel_height+2;
+                                    vert_position=Top_textposition-0.5*ypixel_height+3;
                                     DrawFormattedText(wPtr, char(text3), horz_position, vert_position, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low +205
                                 else
                                     DrawFormattedText(wPtr, char(text3), LeftboxXCenter, Top_textposition, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low
@@ -533,7 +544,7 @@ for i=1:64, %total trials for both staircases
                             %    [normBoundsRect, offsetBoundsRect]= Screen('TextBounds', wPtr, char(text3), (LeftboxXCenter), ((Bottom_textposition)), [], []); %offset for bottom
                             %end
                             % --- Familiarity ---
-                            if CondList(i,3)==1; 
+                            if CondList(i,5)==1; 
                                 if length(char(text3))>1;
                                     [normBoundsRect, offsetBoundsRect]= Screen('TextBounds', wPtr, char(text3), (LeftboxXCenter), Bottom_textposition, [], []); %offset for bottom
                                     xpixel_length=(normBoundsRect(3));
@@ -550,7 +561,7 @@ for i=1:64, %total trials for both staircases
                                     xpixel_length=(normBoundsRect(3));
                                     ypixel_height=(normBoundsRect(4));
                                     horz_position=LeftboxXCenter-0.5*xpixel_length;
-                                    vert_position=Bottom_textposition-0.5*ypixel_height;
+                                    vert_position=Bottom_textposition-0.5*ypixel_height+3;
                                     DrawFormattedText(wPtr, char(text3), (horz_position), vert_position, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low +155
                                 else
                                     DrawFormattedText(wPtr, char(text3), LeftboxXCenter, Bottom_textposition, ConLCG1, [], [], 1); % Unfamiliar = 2 F too low
@@ -584,7 +595,7 @@ for i=1:64, %total trials for both staircases
                     end
                     %}
                     %***** Mondrians ***** % change the size 
-                    if GetSecs-timezero>=0 && GetSecs-timezero<=SOA+Wrdtime+TimeMon && keydown==0 %for context
+                    if GetSecs-timezero>=0 && GetSecs-timezero<=SOA+TimeMon && keydown==0 %for context
                         MonSpeed(end+1) = floor((GetSecs-timezero)/(1/MondFreq));
                         if length(MonSpeed)~=1 && MonSpeed(end)~=MonSpeed(end-1)
                             o=o+1;
@@ -597,28 +608,28 @@ for i=1:64, %total trials for both staircases
                         penWidthPixels = 3; % width for the cuing frame
 
                         % Draw the rect to the screen
-                        if CondList(i,5)==1 % cue valid
-                            if CondList(i,4)==1 %Top
-                                centeredRect = CenterRectOnPointd(baseRect, MonLeftXCenter+1, YCenter-32);
+                        if CondList(i,7)==1 % cue valid
+                            if CondList(i,6)==1 %Top
+                                centeredRect = CenterRectOnPointd(baseRect, MonLeftXCenter, Top_textposition);
 %                                 if a(i)>20
 %                                     Screen('FillOval', wPtr, rectColor, centeredRect, maxDiameter);
 %                                 end
-                                Screen('FrameRect', wPtr, [0 255 0], MonTop, penWidthPixels); %cue
+                                Screen('FrameRect', wPtr, rect_col, MonTop+[-3 -3 3 3], penWidthPixels); %cue
                                 breakmon=GetSecs-timezero;
-                            elseif CondList(i,4)==2 %Bottom
-                                centeredRect = CenterRectOnPointd(baseRect, MonRightXCenter+1, YCenter+32);
+                            elseif CondList(i,6)==2 %Bottom
+                                centeredRect = CenterRectOnPointd(baseRect, MonRightXCenter, Bottom_textposition);
 %                                 if a(i)>20
 %                                     Screen('FillOval', wPtr, rectColor, centeredRect, maxDiameter);
 %                                 end
-                                Screen('FrameRect', wPtr, [0 255 0], MonBottom, penWidthPixels);
+                                Screen('FrameRect', wPtr, rect_col, MonBottom+[-3 -3 3 3], penWidthPixels);
                                 breakmon=GetSecs-timezero;
                             end
-                        elseif CondList(i,5)==2 % cue invalid
-                            if CondList(i,4)==1 %Top
-                                Screen('FrameRect', wPtr, [0 255 0], MonBottom, penWidthPixels);
+                        elseif CondList(i,7)==2 % cue invalid
+                            if CondList(i,6)==1 %Top
+                                Screen('FrameRect', wPtr, rect_col, MonBottom+[-3 -3 3 3], penWidthPixels);
                                 breakmon=GetSecs-timezero;
-                            elseif CondList(i,4)==2 %Bottom
-                                Screen('FrameRect', wPtr, [0 255 0], MonTop, penWidthPixels);
+                            elseif CondList(i,6)==2 %Bottom
+                                Screen('FrameRect', wPtr, rect_col, MonTop+[-3 -3 3 3], penWidthPixels);
                                 breakmon=GetSecs-timezero;
                             end
                         end
@@ -641,11 +652,12 @@ for i=1:64, %total trials for both staircases
                     end
 
                     if keydown==0
-                        if (GetSecs-(timezero)>Wrdtime+SOA),
+                        if (GetSecs-(timezero)>SOA+TimeMon),
                             NonBreakTime=GetSecs;
                             ResultSet(i,9)= 0; %target word unbroken
-                            ResultSet(i,10)= NonBreakTime-(timezero+Wrdtime+SOA);
-                            disp('Non-broken target:');disp(num2str(NonBreakTime-(timezero+SOA)))
+                            ResultSet(i,10)= NonBreakTime-(timezero+SOA);
+                            nbtime=NonBreakTime-(timezero+SOA);
+                            disp(sprintf('NB: %d',round(nbtime,3)))
                             response = 0;
                             UD_down = PAL_AMUD_updateUD_down(UD_down, response);
                             keydown=3;
@@ -656,51 +668,49 @@ for i=1:64, %total trials for both staircases
                     end
                     if keydown==1,
                         Writetext(wPtr,textqn,LeftboxXCenter+20,RightboxXCenter+20,YCenter+26,  60,60, [255 255 255],18);
-                        if keyCode(KbName(UpArrow)) && (GetSecs-(timezero)<SOA+Wrdtime+1.5), % Answers Location question
+                        if keyCode(KbName(UpArrow)) && (GetSecs-(timezero)<SOA+TimeMon+1.5), % Answers Location question
                             BROKEN=1;
                             ResultSet(i,8)=1; %Broken on Right
                             keydown=3;
-                            disp('Right')
-                            if CondList(i,4)==1 % stimulus right
-                                disp('broken')
-                                if (Suppressiontime<1.0)
-                                    response = 1;
-                                    UD_down = PAL_AMUD_updateUD_down(UD_down, response);
+                            %disp('Top')
+                            if CondList(i,6)==1 % stimulus right
+                                disp('Top +')
+                                if (Suppressiontime<0.5)
+                                    %
                                 elseif (Suppressiontime>2.0)
                                     response = 0;
                                     UD_down = PAL_AMUD_updateUD_down(UD_down, response);
-                                elseif (Suppressiontime>1.0 && Suppressiontime<2.0);
+                                elseif (Suppressiontime>0.5 && Suppressiontime<2.0);
                                     response = 1;
                                     UD_down = PAL_AMUD_updateUD_down(UD_down, response);
                                 end
-                            else disp('false alarm')
+                            else disp('Top FALSEALARM')
                             end
 %                             if a(i)>20,
 %                                 Catch=Catch+1; 
 %                             end    
-                        elseif keyCode(KbName(DownArrow)) && (GetSecs-(timezero)<SOA+Wrdtime+1.5), % Answers Location question
+                        elseif keyCode(KbName(DownArrow)) && (GetSecs-(timezero)<SOA+TimeMon+1.5), % Answers Location question
                             BROKEN=1;
                             ResultSet(i,8)=2; %Broken on Left
                             keydown=3;
-                            disp('Left')
-                            if CondList(i,4)==2 % stimulus left
-                                disp('broken')
-                                if (Suppressiontime<1.0)
-                                    response = 1;
-                                    UD_down = PAL_AMUD_updateUD_down(UD_down, response);
+                            %disp('Bottom')
+                            if CondList(i,6)==2 % stimulus left
+                                disp('Bottom +')
+                                if (Suppressiontime<0.5)
+                                    %
                                 elseif (Suppressiontime>2.0)
                                     response = 0;
                                     UD_down = PAL_AMUD_updateUD_down(UD_down, response);
-                                elseif (Suppressiontime>1.0 && Suppressiontime<2.0);
+                                elseif (Suppressiontime>0.5 && Suppressiontime<2.0);
                                     response = 1;
                                     UD_down = PAL_AMUD_updateUD_down(UD_down, response);
                                 end
-                            else disp('false alarm')
+                            else disp('Bottom FALSEALARM')
                             end 
 %                             if a(i)>20,
 %                                 Catch=Catch+1;
 %                             end
-                        elseif (GetSecs-(timezero)>SOA+Wrdtime+1.5), %stops Location question
+                        elseif (GetSecs-(timezero)>SOA+TimeMon+1.5), %stops Location question
                             keydown=3;
                         end
                     end
@@ -708,13 +718,14 @@ for i=1:64, %total trials for both staircases
                         if GetSecs-timezero > SOA
                             if keyCode(KbName(space)),
                                 if keydown==0
-                                    if (GetSecs-timezero-SOA<=Wrdtime) 
-                                        disp(keydown)
+                                    if (GetSecs-timezero-SOA<=TimeMon) 
+                                        %disp(keydown);
                                         BreakTime=GetSecs;
                                         Suppressiontime = BreakTime-timezero-SOA;
                                         ResultSet(i,9)= 1; %target word broken
                                         ResultSet(i,10)= Suppressiontime; %Suppression time
-                                        disp('ST:');disp(num2str(BreakTime-(timezero+SOA)))
+                                        %disp('ST:');disp(num2str(BreakTime-(timezero+SOA)))
+                                        disp(sprintf('ST: %f',round(Suppressiontime,3)))
                                     end
                                 end
                                 keydown=keydown+1;
@@ -780,4 +791,5 @@ Mean_up = PAL_AMUD_analyzeUD_up(UD_up, 'reversals', 4);
 disp(sprintf('\nAscending threshold (last 4 reversals): %f', Mean_up))
 Mean_down = PAL_AMUD_analyzeUD_down(UD_down, 'reversals', 4);
 disp(sprintf('\nDescending threshold (last 4 reversals): %f', Mean_down))
-threshold=(Mean_up+Mean_down)/2;
+mean_threshold=(Mean_up+Mean_down)/2;
+disp(sprintf('\nMean threshold: %f', mean_threshold))
