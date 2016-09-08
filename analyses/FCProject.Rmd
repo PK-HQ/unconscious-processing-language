@@ -1,6 +1,6 @@
 ---
 title: "FC"
-author: "PK"
+author: "EA"
 date: "15 August 2016"
 output: 
     html_document:
@@ -44,7 +44,8 @@ nSubj <- length(dataFiles) # number of subjects
 
 # Going through all subjects' data:
 df <- data.frame() # data frame that combines all subjects' data into a single ds
-curSubjN <- 1 #temp
+curSubjN <- 6 #temp
+
 for(curSubjN in 1:nSubj){
     # Loading the data;
     ds <- read.csv(paste(dataDir, dataFiles[curSubjN], sep=''))
@@ -72,6 +73,13 @@ df$Congruency[df$congr==1] <- 'Congruent'
 df$Congruency[df$congr==0] <- 'Incongruent'
 df$Attention[df$cued==1] <- 'Cued'
 df$Attention[df$cued==0] <- 'Uncued'
+# Binning
+df$bin <- 6
+df$bin[df$trialN<500] <- 5
+df$bin[df$trialN<400] <- 4
+df$bin[df$trialN<300] <- 3
+df$bin[df$trialN<200] <- 2
+df$bin[df$trialN<100] <- 1
 head(df)
 ```
 
@@ -87,14 +95,14 @@ ddply(df, c('subjId'), summarise, outlNumLow = median(outlNlo), outlNumHigh = me
 for(curSubjN in 1:nSubj){
     curSubjId <- levels(df$subjId)[curSubjN]
     ss <- df[df$subjId==curSubjId,]
-    p <- ggplot(data=ss, aes(x=trialN, y=rt)) + 
+    p <- ggplot(data=ds, aes(x=trialN, y=rt)) + 
         geom_line() + theme_bw() + ylim(.5,2) +
         labs(x='Trial Number', y='Suppression Time',
              title=paste('Participant', as.character(curSubjId))) + 
         theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
               axis.text=element_text(size=8), axis.title=element_text(size=9),
               legend.text=element_text(size=8), legend.title=element_text(size=9),
-              legend.key = element_blank(), legend.margin=unit(-.04, 'in'),
+              legend.key = element_blank(), #legend.margin=unit(-.04, 'in'),
               legend.background = element_rect(fill='transparent'))
     plot(p)
 }
@@ -107,14 +115,14 @@ for(curSubjN in 1:nSubj){
 for(curSubjN in 1:nSubj){
     curSubjId <- levels(df$subjId)[curSubjN]
     ss <- df[df$subjId==curSubjId,]
-    p <- ggplot(data=ss, aes(x=factor(Familiarity), y=rt, colour=factor(Congruency))) + 
+    p <- ggplot(data=df, aes(x=factor(Familiarity), y=rt, colour=factor(Congruency))) + 
         geom_boxplot() + facet_grid(~Attention) + theme_bw() +
         labs(x='Familiarity', y='Suppression Time', colour='Congruency',
              title=paste('Participant', as.character(curSubjId))) + 
         theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
               axis.text=element_text(size=8), axis.title=element_text(size=9),
               legend.text=element_text(size=8), legend.title=element_text(size=9),
-              legend.key = element_blank(), legend.margin=unit(-.04, 'in'),
+              legend.key = element_blank(), #legend.margin=unit(-.04, 'in'),
               legend.background = element_rect(fill='transparent'))
     plot(p)
 }
@@ -125,13 +133,13 @@ for(curSubjN in 1:nSubj){
 ## Is cueing effective?
 ```{r, fig.height=3, fig.width=6}
 p <- ggplot(data=df, aes(x=Attention, y=rt)) + 
-    geom_boxplot() + facet_grid(~subjId) + theme_bw() +
+    geom_boxplot() + facet_grid(~bin) + theme_bw() +
     labs(x='Attention effect X Subject', y='Suppression Time', colour='Attention',
          title='Effect of attentional cueing') +
     theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
           axis.text=element_text(size=8), axis.title=element_text(size=9),
           legend.text=element_text(size=8), legend.title=element_text(size=9),
-          legend.key = element_blank(), legend.margin=unit(.0, 'in'),
+          legend.key = element_blank(), #legend.margin=unit(.0, 'in'),
           legend.background = element_rect(fill='transparent'))
 plot(p)
 ```
