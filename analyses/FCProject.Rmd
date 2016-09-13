@@ -85,9 +85,10 @@ head(df)
 
 # Quality control
 
-## Outlier suppression times per participant
+## Summary stats per participant
 ```{r}
-ddply(df, c('subjId'), summarise, outlNumLow = median(outlNlo), outlNumHigh = median(outlNhi))
+ddply(df, c('subjId'), summarise, outlNumLow = median(outlNlo), outlNumHigh = median(outlNhi),
+      cuedCaught = sum(cued & corr), uncuedCaught = sum(!cued & corr))
 ```
 
 ## RTs across trials
