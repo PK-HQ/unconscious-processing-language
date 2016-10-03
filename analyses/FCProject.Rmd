@@ -38,7 +38,7 @@ library(plyr)
 #Importing the data
 #data_dir <- '/Volumes/PK/'
 homeDir <- path.expand('~')
-dataDir <- paste(homeDir, 'Dropbox/Projects/fc/fc/data/', sep='/')
+dataDir <- paste(homeDir, 'Dropbox/Projects/fc/fc/data/usable_data/extracted', sep='/')
 dataFiles <- dir(dataDir, pattern='csv')
 nSubj <- length(dataFiles) # number of subjects
 
@@ -48,20 +48,22 @@ curSubjN <- 6 #temp
 
 for(curSubjN in 1:nSubj){
     # Loading the data;
-    ds <- read.csv(paste(dataDir, dataFiles[curSubjN], sep=''))
+    ds <- read.csv(paste(dataDir, dataFiles[curSubjN], sep='/'))
     # Shorter names for variables:
     colnames(ds) <- c('subjId', 'domEyeR', 'threshStHi', 'threshStLo', 'thresh', 'trialN', 'sentId',
-                      'sentPx', 'congr', 'fam', 'locTop', 'cued', 'corr', 'broken', 'rt')
+                      'sentPx', 'congr', 'fam', 'locTop', 'cued', 'corr', 'broken', 'st')
     # Non-blank data set:
     cds <- ds[ds$sentId<31,]
     # Removing the outliers:
-    outlLo <- cds$rt>(mean(cds$rt)-outT*sd(cds$rt)) # binary for every row
-    outlHi <- cds$rt<(mean(cds$rt)+outT*sd(cds$rt))
+    outlLo <- cds$st>(mean(cds$st)-outT*sd(cds$st)) # binary for every row
+    outlHi <- cds$st<(mean(cds$st)+outT*sd(cds$st))
     cds$outlNlo <- sum(!outlLo) # counting the number of outliers before removing
     cds$outlNhi <- sum(!outlHi)
     cds <- cds[outlLo,] # removing the outliers
     cds <- cds[outlHi,]
     cds <- cds[!is.na(cds$subjId),] # usually don't need this; remove NA rows
+    # Normalized suppression times:
+    
     # Binding the subject ds to the common data frame:
     df <- rbind(df, cds)
 }
@@ -91,12 +93,12 @@ ddply(df, c('subjId'), summarise, outlNumLow = median(outlNlo), outlNumHigh = me
       cuedCaught = sum(cued & corr), uncuedCaught = sum(!cued & corr))
 ```
 
-## RTs across trials
+## sts across trials
 ```{r, fig.height=3, fig.width=4.5}
 for(curSubjN in 1:nSubj){
     curSubjId <- levels(df$subjId)[curSubjN]
     ss <- df[df$subjId==curSubjId,]
-    p <- ggplot(data=ss, aes(x=trialN, y=rt)) +  geom_line() + theme_bw() + ylim(.5,2) +
+    p <- ggplot(data=ss, aes(x=trialN, y=st)) +  geom_line() + theme_bw() + ylim(.5,2) +
         labs(x='Trial Number', y='Suppression Time', title=paste('Participant', as.character(curSubjId))) + 
         theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
               axis.text=element_text(size=8), axis.title=element_text(size=9),
@@ -114,7 +116,7 @@ for(curSubjN in 1:nSubj){
 for(curSubjN in 1:nSubj){
     curSubjId <- levels(df$subjId)[curSubjN]
     ss <- df[df$subjId==curSubjId,]
-    p <- ggplot(data=ss, aes(x=factor(Familiarity), y=rt, colour=factor(Congruency))) +  geom_boxplot() + 
+    p <- ggplot(data=ss, aes(x=factor(Familiarity), y=st, colour=factor(Congruency))) +  geom_boxplot() + 
         facet_grid(~Attention) + theme_bw() +
         labs(x='Familiarity', y='Suppression Time', colour='Congruency',
              title=paste('Participant', as.character(curSubjId))) + 
@@ -131,7 +133,7 @@ for(curSubjN in 1:nSubj){
 
 ## Is cueing effective across participants?
 ```{r, fig.height=3, fig.width=6}
-p <- ggplot(data=df, aes(x=Attention, y=rt)) + geom_boxplot() + facet_grid(~subjId) + theme_bw() +
+p <- ggplot(data=df, aes(x=Attention, y=st)) + geom_boxplot() + facet_grid(~subjId) + theme_bw() +
     labs(x='Attention effect X Subject', y='Suppression Time', colour='Attention',
          title='Effect of attentional cueing') +
     theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
@@ -144,7 +146,7 @@ plot(p)
 
 ## Is cueing effective across trials?
 ```{r, fig.height=3, fig.width=9}
-p <- ggplot(data=df, aes(x=Attention, y=rt)) + geom_boxplot() + facet_grid(~bin) + theme_bw() +
+p <- ggplot(data=df, aes(x=Attention, y=st)) + geom_boxplot() + facet_grid(~bin) + theme_bw() +
     labs(x='Attention effect X 100-trial bins', y='Suppression Time', colour='Attention',
          title='Effect of attentional cueing') +
     theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
