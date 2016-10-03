@@ -63,7 +63,7 @@ for(curSubjN in 1:nSubj){
     cds <- cds[outlHi,]
     cds <- cds[!is.na(cds$subjId),] # usually don't need this; remove NA rows
     # Normalized suppression times:
-    
+    cds$stNorm <- cds$st / mean(cds$st)    
     # Binding the subject ds to the common data frame:
     df <- rbind(df, cds)
 }
@@ -153,6 +153,23 @@ p <- ggplot(data=df, aes(x=Attention, y=st)) + geom_boxplot() + facet_grid(~bin)
           axis.text=element_text(size=8), axis.title=element_text(size=9),
           legend.text=element_text(size=8), legend.title=element_text(size=9),
           legend.key = element_blank(), #legend.margin=unit(.0, 'in'),
+          legend.background = element_rect(fill='transparent'))
+plot(p)
+```
+
+## Congruence X Familiarity X Cue
+```{r, fig.height=3, fig.width=4.5}
+dfSum <- ddply(df, .(subjId, Attention, Familiarity, Congruency), summarise, 
+               `Mean Normalized ST` = mean(stNorm, na.rm=T))
+p <- ggplot(data=dfSum, aes(x=factor(Familiarity), y=`Mean Normalized ST`, 
+                            colour=factor(Congruency))) + 
+    geom_boxplot() +  facet_grid(~Attention) + theme_bw() +
+    labs(x='Familiarity', y='Suppression Time', colour='Congruency',
+         title='Congruence X Familiarty X Cue') + 
+    theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
+          axis.text=element_text(size=8), axis.title=element_text(size=9),
+          legend.text=element_text(size=8), legend.title=element_text(size=9),
+          legend.key = element_blank(), #legend.margin=unit(-.04, 'in'),
           legend.background = element_rect(fill='transparent'))
 plot(p)
 ```
