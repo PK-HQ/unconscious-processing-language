@@ -38,7 +38,7 @@ library(plyr)
 #Importing the data
 #data_dir <- '/Volumes/PK/'
 homeDir <- path.expand('~')
-dataDir <- paste(homeDir, 'Dropbox/Projects/fc/fc/data/usable_data/extracted', sep='/')
+dataDir <- paste(homeDir, 'Dropbox/Projects/fc/fc/data/usable/extracted', sep='/')
 dataFiles <- dir(dataDir, pattern='csv')
 nSubj <- length(dataFiles) # number of subjects
 
