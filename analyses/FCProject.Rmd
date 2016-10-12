@@ -173,3 +173,8 @@ p <- ggplot(data=dfSum, aes(x=factor(Familiarity), y=`Mean Normalized ST`,
           legend.background = element_rect(fill='transparent'))
 plot(p)
 ```
+
+# Linear models
+```{r}
+# Centered data set:
+```
