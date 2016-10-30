@@ -132,7 +132,7 @@ for(curSubjN in 1:nSubj){
 # Group plots
 
 ## Is cueing effective across participants?
-```{r, fig.height=3, fig.width=6}
+```{r, fig.height=3, fig.width=9}
 p <- ggplot(data=df, aes(x=Attention, y=st)) + geom_boxplot() + facet_grid(~subjId) + theme_bw() +
     labs(x='Attention effect X Subject', y='Suppression Time', colour='Attention',
          title='Effect of attentional cueing') +
@@ -164,6 +164,20 @@ dfSum <- ddply(df, .(subjId, Attention, Familiarity, Congruency), summarise,
 p <- ggplot(data=dfSum, aes(x=factor(Familiarity), y=`Mean Normalized ST`, 
                             colour=factor(Congruency))) + 
     geom_boxplot() +  facet_grid(~Attention) + theme_bw() +
+    labs(x='Familiarity', y='Suppression Time', colour='Congruency',
+         title='Congruence X Familiarty X Cue') + 
+    theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
+          axis.text=element_text(size=8), axis.title=element_text(size=9),
+          legend.text=element_text(size=8), legend.title=element_text(size=9),
+          legend.key = element_blank(), #legend.margin=unit(-.04, 'in'),
+          legend.background = element_rect(fill='transparent'))
+plot(p)
+```
+
+```{r, fig.height=4, fig.width=8}
+p <- ggplot(data=dfSum, aes(x=factor(Familiarity), y=`Mean Normalized ST`, 
+                            group=factor(subjId), colour=factor(subjId))) + 
+    geom_line() + facet_grid(~Attention*Congruency) + theme_bw() +
     labs(x='Familiarity', y='Suppression Time', colour='Congruency',
          title='Congruence X Familiarty X Cue') + 
     theme(panel.grid.minor.x=element_blank(), panel.grid.minor.y=element_blank(),
