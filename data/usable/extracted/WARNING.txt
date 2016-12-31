@@ -1,0 +1,3 @@
+the subjID in the following files did not correspond to file names; they have been therefore matched:
+FC_cfs_sub42_20161221_1531_clean: 49 -> 42
+FC_cfs_sub41_20161221_1422_clean: 49 -> 41

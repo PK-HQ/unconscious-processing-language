@@ -37,14 +37,14 @@ library(plyr)
 
 #Importing the data
 #data_dir <- '/Volumes/PK/'
-homeDir <- path.expand('~')
+homeDir <- path.expand('~/..')
 dataDir <- paste(homeDir, 'Dropbox/Projects/fc/fc/data/usable/extracted', sep='/')
 dataFiles <- dir(dataDir, pattern='csv')
 nSubj <- length(dataFiles) # number of subjects
 
 # Going through all subjects' data:
 df <- data.frame() # data frame that combines all subjects' data into a single ds
-curSubjN <- 6 #temp
+#curSubjN <- 6 #temp
 
 for(curSubjN in 1:nSubj){
     # Loading the data;
@@ -97,6 +97,7 @@ ddply(df, c('subjId'), summarise, outlNumLow = median(outlNlo), outlNumHigh = me
 ```{r, fig.height=3, fig.width=4.5}
 for(curSubjN in 1:nSubj){
     curSubjId <- levels(df$subjId)[curSubjN]
+    print(curSubjId)
     ss <- df[df$subjId==curSubjId,]
     p <- ggplot(data=ss, aes(x=trialN, y=st)) +  geom_line() + theme_bw() + ylim(.5,2) +
         labs(x='Trial Number', y='Suppression Time', title=paste('Participant', as.character(curSubjId))) + 
