@@ -37,7 +37,8 @@ library(plyr)
 
 #Importing the data
 #data_dir <- '/Volumes/PK/'
-homeDir <- path.expand('~/..')
+#homeDir <- path.expand('~/..')
+homeDir <- path.expand('~')
 dataDir <- paste(homeDir, 'Dropbox/Projects/fc/fc/data/usable/extracted', sep='/')
 dataFiles <- dir(dataDir, pattern='csv')
 nSubj <- length(dataFiles) # number of subjects
@@ -190,6 +191,27 @@ plot(p)
 ```
 
 # Linear models
+
+## Centered data set
 ```{r}
-# Centered data set:
+df$congrC <- -1
+df$congrC[df$congr==1] <- 1
+df$famC <- -1
+df$famC[df$fam==1] <- 1
+df$cuedC <- -1
+df$cuedC[df$cued==1] <- 1
+df$topSubj <- 0
+df$topSubj[df$locTop==df$cued] <- 1
+```
+
+## Mixed linear regressions
+```{r}
+#mFull <- lmer(st ~ famC * cuedC * congrC + (1|subjId), df)
+library(BayesFactor)
+df$subjId <- as.factor(df$subjId)
+df$fam<- as.factor(df$fam)
+df$cued<- as.factor(df$cued)
+df$congr<- as.factor(df$congr)
+bf <- anovaBF(st ~ fam * cued * congr + subjId, data=df, whichRandom = 'subjId')
+bf
 ```
