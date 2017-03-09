@@ -28,7 +28,7 @@ code.r{
 ###
 
 # Setting variables:
-options(width=108)
+options(width=109)
 outT <- 2.5 # Outlier factor
 
 # Loading libraries
@@ -190,7 +190,7 @@ p <- ggplot(data=dfSum, aes(x=factor(Familiarity), y=`Mean Normalized ST`,
 plot(p)
 ```
 
-# Linear models
+# Statistical tests
 
 ## Centered data set
 ```{r}
@@ -206,12 +206,47 @@ df$topSubj[df$locTop==df$cued] <- 1
 
 ## Mixed linear regressions
 ```{r}
-#mFull <- lmer(st ~ famC * cuedC * congrC + (1|subjId), df)
+library(lme4)
+library(lmerTest)
+db <- '~/Dropbox/' # on Mac
+source(paste(db, 'Prog/R/myFunctions/pvalfn.R', sep=''))
+#mFull <- aov(st ~ fam * cued * congr + Error(subjId/(fam*cued*congr)), df)
+#mFull <- aov(st ~ fam * cued * congr + Error(subjId), df)
+#summary(mFull)
+mFull <- lmer(st ~ famC * cuedC * congrC + (1|subjId/sentId), df)
+pvalfn(mFull)
+```
+
+## Bayes Factor
+
+### Full 'top' model results
+Numbers above 10 indicate a significant improvement of the model (compared to the full model) when a term is /dropped/.
+```{r}
 library(BayesFactor)
 df$subjId <- as.factor(df$subjId)
+df$sentId <- as.factor(df$sentId)
 df$fam<- as.factor(df$fam)
 df$cued<- as.factor(df$cued)
 df$congr<- as.factor(df$congr)
-bf <- anovaBF(st ~ fam * cued * congr + subjId, data=df, whichRandom = 'subjId')
-bf
+bfTop <- anovaBF(st ~ fam * cued * congr + subjId + sentId, data=df, 
+                 whichRandom = c('subjId','sentId'), whichModels='top')
+bfTop
+```
+
+### Improvement over minimal cued-only model?
+Numbers below 1 indicate a significant detriment to the cued-only model if a given term is included.
+```{r}
+bfFull<- anovaBF(st ~ fam * cued * congr + subjId + sentId, data=df, 
+                 whichRandom = c('subjId','sentId'))
+bfCued <- anovaBF(st ~ cued + subjId + sentId, data=df,
+                  whichRandom = c('subjId','sentId'))
+bfFull/ bfCued
+```
+
+## Bayesian Regression
+```{r}
+regFull <- regressionBF(st ~ famC * cuedC * congrC, data=df)
+regFull
+regCued <- regressionBF(st ~ cuedC, data=df)
+regFull / regCued
 ```
